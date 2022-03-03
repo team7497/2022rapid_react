@@ -19,7 +19,7 @@ import frc.robot.Constants.PortID;
 import frc.robot.tools.VelocityTransform;
 
 public class ShootSubsystem extends SubsystemBase {
-  private TalonFX shoot;
+  public TalonFX shoot;
   private VictorSPX shoot_turn;
   // 宣告Faults類別的暫存
   private Faults temp;
@@ -28,10 +28,10 @@ public class ShootSubsystem extends SubsystemBase {
 
   public static enum ShootVelocityPercentage {
     Max(1),
-    Fast(0.8),
+    Fast(0.85),
     Quick(0.7),
     Normal(0.6),
-    Slow(0.5),
+    Slow(0.48),
     Min(0);
 
     public double value;
@@ -69,6 +69,11 @@ public class ShootSubsystem extends SubsystemBase {
       default:
         shoot(mode.value, mode.value);
     }
+  }
+
+  public void shoot_voltage(double speed)
+  {
+    shoot.set(ControlMode.PercentOutput, speed);
   }
 
   /**

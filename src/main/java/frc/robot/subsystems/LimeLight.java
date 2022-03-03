@@ -62,7 +62,6 @@ public class LimeLight extends SubsystemBase{
     @Override
     public void periodic()
     {
-        if (!isEnable) return;
         tv      = getDouble(InformationType.vaild_target);
         tx      = getDouble(InformationType.horizontal_angle);
         ty      = getDouble(InformationType.vertical_angle);

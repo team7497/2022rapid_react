@@ -93,7 +93,8 @@ public final class Constants {
                                 camera_angle = 60 * Math.PI / 180; // in radian
     
     public static final double target_height    = 265.5;
-    public static final double kMotorRampRate   = 0.25f;
-    public static final double kLimeLightAdjust = 0.035f;
+    public static final double kMotorRampRate   = 0.1f;
+    public static final double kLimeLightAdjust = 0.04f;
     public static final double kNavXAdjust      = 0.035f;
+    public static final double kAutoNavXAdjust  = 0.05f;
 }

@@ -90,7 +90,7 @@ public class Robot extends TimedRobot {
     }catch(Exception e){
       System.out.printf("Fail to set climb mode of ElevateSubsystem.");
     }
-    m_LimeLight.setLightMode(LightMode.Off);
+    m_LimeLight.setLightMode(LightMode.On);
   }
 
   @Override

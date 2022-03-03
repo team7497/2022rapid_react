@@ -4,9 +4,12 @@
 
 package frc.robot.commands;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.Constants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.GyroSubsystem;
 import frc.robot.subsystems.IndexSubsystem;
@@ -17,6 +20,8 @@ import frc.robot.subsystems.ShootSubsystem.ShootVelocityPercentage;
 
 /** An example command that uses an example subsystem. */
 public class AutonomousCommand extends CommandBase {
+  @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
+
   private DriveSubsystem  m_DriveSubsystem;
   private GyroSubsystem   m_GyroSubsystem;
   private IntakeSubsystem m_IntakeSubsystem;
@@ -31,10 +36,15 @@ public class AutonomousCommand extends CommandBase {
   private SlewRateLimiter m_Limiter;
 
   private boolean finished = false;
-
   private Timer timer;
-  @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
 
+  private enum PathType{
+    straight_intake,  // shoot, backward, turn 180 degrees, forward, intake, turn 180 degrees, forward, shoot
+    basic,  // shoot, backward
+    turn_intake;  // shoot, turn 170 degrees, forward, intake, turn -135 degrees, forward, shoot
+  }
+
+  private PathType type;
   /**
    * Creates a new ExampleCommand.
    *
@@ -52,9 +62,11 @@ public class AutonomousCommand extends CommandBase {
     c_AutoAim       = new AutoAim(m_ShootSubsystem);
     c_AutoTurn      = new AutoTurn(m_GyroSubsystem, c_DriveControl);
 
-    m_Limiter = new SlewRateLimiter(1.5);
+    m_Limiter = new SlewRateLimiter(2);
 
     timer = new Timer();
+
+    type = PathType.basic;
 
     // Use addRequirements() here to declare subsystem dependencies.
     addRequirements(m_DriveSubsystem, m_GyroSubsystem, m_IntakeSubsystem, m_LimeLight, m_ShootSubsystem, m_IndexSubsystem);
@@ -73,58 +85,141 @@ public class AutonomousCommand extends CommandBase {
   @Override
   public void execute()
   {
-    if (timer.get() <= 3.0f)                                        // 瞄 & falcon先轉
-    {
-      c_AutoAim.execute();
-      m_ShootSubsystem.shoot(ShootVelocityPercentage.Normal);
-      m_Limiter.reset(-0.5);
+    switch (type) {
+      case straight_intake:
+        PathStraightIntake();
+        break;
+      case turn_intake:
+        PathTurnIntake();
+        break;
+      case basic:
+        PathBasic();
+        break;
     }
-    else if (timer.get() > 3.0f && timer.get() <= 5.0f)             // 射球
-    {
-      c_AutoAim.execute();
-      m_ShootSubsystem.shoot(ShootVelocityPercentage.Normal);
-      m_IndexSubsystem.trigger(0.5);
-      m_IndexSubsystem.index(-0.5);
-    }
-    else if (timer.get() > 5.0f && timer.get() <= 6.5f)             // 轉向
-    {
-      turnDrive(0.5);
-      moveDrive(m_Limiter.calculate(0));
-    }
-    else if (timer.get() > 6.5f && timer.get() <= 9.0f)             // 後退 & 吸球
-    {
-      moveDrive(0.5f);
-      m_IntakeSubsystem.setSolenoidOut();
-      m_IntakeSubsystem.intake(0.5f);
-      m_IndexSubsystem.index(-0.5f);
-    }
-    else if (timer.get() > 9.0f && timer.get() <= 10.5)             // 轉向
-    {
-      turnDrive(0.5);
-    }
-    else if (timer.get() > 10.5f && timer.get() <= 13.5)            // 瞄 & falcon先轉
-    {
-      c_AutoAim.execute();
-      m_ShootSubsystem.shoot(ShootVelocityPercentage.Normal);
-    } 
-    else if (timer.get() > 13.5f && timer.get() <= 15.0f)           // 射球
-    {
-      c_AutoAim.execute();
-      m_ShootSubsystem.shoot(ShootVelocityPercentage.Normal);
-      m_IndexSubsystem.index(-0.5f);
-      m_IndexSubsystem.trigger(0.5f);
-    }
-    else if (timer.get() > 15.0f)                                   // 停止
+
+    // 停止
+    if (timer.get() > 15.0f)
     {
       m_IndexSubsystem.triggerStop();
       m_IndexSubsystem.indexStop();
       m_IntakeSubsystem.intakeStop();
-      m_ShootSubsystem.shoot(ShootVelocityPercentage.Min);
+      m_ShootSubsystem.shoot_voltage(0.0f);
       c_AutoAim.isFinished();
-      c_DriveControl.ArcadeDrive(0.0, 0.0);
+      turnDrive(0.0f);
+      moveDrive(0.0f);
       
       finished = true;
       end(true);
+    }
+  }
+
+  private void PathTurnIntake(){
+    // 瞄 & falcon先轉
+    if (timer.get() <= 3.0f)
+    {
+      Aim();
+      shoot_voltage(0.6f);
+    }
+    // 射球
+    if (timer.get() > 3.0f && timer.get() <= 5.0f)
+    {
+      Aim();
+      shoot_voltage(0.6f);
+      trigger(0.5);
+      index(-0.5);
+    }
+    // 轉向
+    if (timer.get() > 5.0f && timer.get() <= 6.5f)
+    {
+      double original_angle = m_GyroSubsystem.getYaw();
+      double final_angle = original_angle + 170;
+      c_AutoAim.isFinished();
+
+      while (true)
+      {
+        turnDrive(0.3);
+        if (m_GyroSubsystem.getYaw() > final_angle)
+          break;
+      }
+    }
+    // 後退 & 吸球
+    if (timer.get() > 6.5f && timer.get() <= 9.0f)
+    {
+      moveDrive(0.1f);
+      intake(-0.5f);
+      index(-0.5f);
+
+      if (timer.get() > 8.0f)
+      {
+        setSolenoidOut();
+      }
+    }
+    // 轉向
+    if (timer.get() > 9.0f && timer.get() <= 10.5f)
+    {
+      setSolenoidIn();
+    }
+    // 瞄 & falcon先轉
+    if (timer.get() > 10.5f && timer.get() <= 13.5f)
+    {
+      Aim();
+      shoot_voltage(0.6f);
+    }
+    // 射球
+    if (timer.get() > 13.5f && timer.get() <= 15.0f)
+    {
+      Aim();
+      shoot_voltage(0.6f);
+      index(-0.5f);
+      trigger(0.5f);
+    }
+  }
+  
+  private void PathStraightIntake(){}
+
+  private void PathBasic(){
+    if (timer.get() < .5) {
+      Aim();
+      shoot_voltage(.6);
+    }
+    if (timer.get() > .3 && timer.get() < .5) {
+      trigger(.5);
+      index(-.5);
+    }
+    else if (timer.get() > .5 && timer.get() < 1.3) {
+      moveDrive(.5);
+      m_Limiter.reset(.5);
+    }
+    else if (timer.get() > 1.3 && timer.get() < 1.5) {
+      moveDrive(m_Limiter.calculate(0));
+    }
+    else if (timer.get() > 1.5 && timer.get() < 2.5) {
+      c_AutoTurn.Turn(180);
+    }
+    else if (timer.get() > 2.5 && timer.get() < 3.3) {
+      moveDrive(.45);
+      m_Limiter.reset(.45);
+    }
+    else if (timer.get() > 3.3 && timer.get() < 3.5) {
+      moveDrive(m_Limiter.calculate(0));
+    }
+    else if (timer.get() > 3.5 && timer.get() < 4.5) {
+      c_AutoTurn.Turn(180);
+    }
+    else if (timer.get() > 4.5 && timer.get() < 5.3) {
+      moveDrive(.45);
+      m_Limiter.reset(.45);
+    }
+    else if (timer.get() > 5.3 && timer.get() < 5.5) {
+      moveDrive(m_Limiter.calculate(0));
+    }
+    if (timer.get() < 6 && timer.get() > 5.5) {
+      Aim();
+      shoot_voltage(.6);
+    }
+    if (timer.get() > 6 && timer.get() < 5.8) {
+      trigger(.5);
+      index(-.5);
     }
   }
 
@@ -136,6 +231,45 @@ public class AutonomousCommand extends CommandBase {
   private void turnDrive(double value)
   {
     c_DriveControl.ArcadeDrive(0, value);
+  }
+
+  private void Aim()
+  {
+    double tx_angle = LimeLight.getTx();
+    if((tx_angle < 0.1f) && (tx_angle > -0.1f) && (tx_angle != 0.0f))
+      m_ShootSubsystem.turnStop();
+    else
+      m_ShootSubsystem.turn(-tx_angle * Constants.kLimeLightAdjust);
+  }
+
+  private void index(double speed)
+  {
+    m_IndexSubsystem.index(speed);
+  }
+
+  private void trigger(double speed)
+  {
+    m_IndexSubsystem.trigger(speed);
+  }
+
+  private void intake(double speed)
+  {
+    m_IntakeSubsystem.intake(speed);
+  }
+
+  private void shoot_voltage(double speed)
+  {
+    m_ShootSubsystem.shoot.set(ControlMode.PercentOutput, speed);
+  }
+
+  private void setSolenoidOut()
+  {
+    m_IntakeSubsystem.setSolenoidOut();
+  }
+
+  private void setSolenoidIn()
+  {
+    m_IntakeSubsystem.setSolenoidIn();
   }
 
   // Called once the command ends or is interrupted.

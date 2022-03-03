@@ -107,44 +107,37 @@ public class RobotContainer {
     // * xbox_drive *
     // **************
 
-    // // elevate
-    // new JoystickButton(xbox_drive, Button.kA.value).whileHeld(() -> {
-    //   m_IntakeSubsystem.intake(0.5f);
-    //   m_IndexSubsystem.index(0.5);
-    // });
-    // new JoystickButton(xbox_drive, Button.kA.value).whenReleased(() -> {
-    //   m_IntakeSubsystem.intakeStop();
-    //   m_IndexSubsystem.indexStop();
-    // });
-    // new JoystickButton(xbox_drive, Button.kY.value).whenPressed(() -> {
-    //   m_IntakeSubsystem.intake(-0.5f);
-    //   m_IndexSubsystem.index(-0.5);
-    // });
-    // new JoystickButton(xbox_drive, Button.kY.value).whenReleased(() -> {
-    //   m_IntakeSubsystem.intakeStop();
-    //   m_IndexSubsystem.indexStop();
-    // });
-
-    // new JoystickButton(xbox_drive, Button.kB.value).whenPressed(() -> m_IntakeSubsystem.setSolenoidOut());
-    // new JoystickButton(xbox_drive, Button.kX.value).whenPressed(() -> m_IntakeSubsystem.setSolenoidIn());
-
-    new JoystickButton(xbox_drive, Button.kY.value).whenPressed(() -> m_ElevateSubsystem.climb(0.5f));
-    new JoystickButton(xbox_drive, Button.kY.value).whenReleased(() -> m_ElevateSubsystem.climbStop());
-    new JoystickButton(xbox_drive, Button.kA.value).whenPressed(() -> m_ElevateSubsystem.climb(-0.5f));
-    new JoystickButton(xbox_drive, Button.kA.value).whenReleased(() -> m_ElevateSubsystem.climbStop());
-
-    new JoystickButton(xbox_drive, Button.kB.value).whenPressed(() -> m_ElevateSubsystem.rotate(0.5f));
-    new JoystickButton(xbox_drive, Button.kB.value).whenReleased(() -> m_ElevateSubsystem.rotateStop());
-    new JoystickButton(xbox_drive, Button.kX.value).whenPressed(() -> m_ElevateSubsystem.rotate(-0.5f));
-    new JoystickButton(xbox_drive, Button.kX.value).whenReleased(() -> m_ElevateSubsystem.rotateStop());
-
-    // new POVButton(xbox_drive, 0).whenPressed(() -> m_ElevateSubsystem.climb(0.5f));
-    // new POVButton(xbox_drive, 0).whenReleased(() -> m_ElevateSubsystem.climbStop());
-    // new POVButton(xbox_drive, 180).whenPressed(() -> m_ElevateSubsystem.climb(-0.5f));
-    // new POVButton(xbox_drive, 180).whenReleased(() -> m_ElevateSubsystem.climbStop());
+    new JoystickButton(xbox_drive, Button.kA.value).whileHeld(() -> {
+      m_IntakeSubsystem.intake(0.5f);
+      m_IndexSubsystem.index(0.5f);
+    });
+    new JoystickButton(xbox_drive, Button.kA.value).whenReleased(() -> {
+      m_IntakeSubsystem.intakeStop();
+      m_IndexSubsystem.indexStop();
+    });
+    new JoystickButton(xbox_drive, Button.kY.value).whileHeld(() -> {
+      m_IntakeSubsystem.intake(-0.5f);
+      m_IndexSubsystem.index(-0.5f);
+    });
+    new JoystickButton(xbox_drive, Button.kY.value).whenReleased(() -> {
+      m_IntakeSubsystem.intakeStop();
+      m_IndexSubsystem.indexStop();
+    });
+    new JoystickButton(xbox_drive, Button.kB.value).whenPressed(() -> m_IntakeSubsystem.setSolenoidOut());
+    new JoystickButton(xbox_drive, Button.kX.value).whenPressed(() -> m_IntakeSubsystem.setSolenoidIn());
 
     new JoystickButton(xbox_drive, Button.kStart.value).whileHeld(c_AutoAim);
 
+    new JoystickButton(xbox_drive, Button.kLeftBumper.value).whenPressed(() -> m_ElevateSubsystem.climb(-0.5f));
+    new JoystickButton(xbox_drive, Button.kLeftBumper.value).whenReleased(() -> m_ElevateSubsystem.climbStop());
+    new JoystickButton(xbox_drive, Button.kRightBumper.value).whenPressed(() -> m_ElevateSubsystem.climb(0.5f));
+    new JoystickButton(xbox_drive, Button.kRightBumper.value).whenReleased(() -> m_ElevateSubsystem.climbStop());
+
+    new POVButton(xbox_drive, 90).whenPressed(() -> m_ElevateSubsystem.rotate(-0.5f));
+    new POVButton(xbox_drive, 90).whenReleased(() -> m_ElevateSubsystem.rotateStop());
+    new POVButton(xbox_drive, 270).whenPressed(() -> m_ElevateSubsystem.rotate(0.5f));
+    new POVButton(xbox_drive, 270).whenReleased(() -> m_ElevateSubsystem.rotateStop());
+    
     // **************
     // * xbox_shoot *
     // **************
